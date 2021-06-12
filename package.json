@@ -1,0 +1,11 @@
+{
+  "name": "hw1",
+  "version": "1.0.0",
+  "description": "A simple Hello world script for course node.js Master-class on pirple",
+  "main": "hw1.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pagoulid",
+  "license": "ISC"
+}
