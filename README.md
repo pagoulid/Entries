@@ -2,7 +2,7 @@
 Creating/Updating/Deleting Entries 
 Using app Postman
 Programming Language : Nodejs
-
+Type node hw1.js on console to execute program
 Type localhost:3001/hello(or <morning> or <sunny>)?name=<name>&username=<username>&pswd=<password>&GroupUser=<Group>
 ( e.g.localhost:3001/morning?name=Boyka&username=SCoTT&pswd=Adkins&GroupUser=Tough_guys
 After url(localhost:3001/), type path to return specific message on report and the query field
