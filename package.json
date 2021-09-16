@@ -4,8 +4,11 @@
   "description": "A simple Hello world script for course node.js Master-class on pirple",
   "main": "hw1.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "devStart":"nodemon hw1.js"
   },
   "author": "Pagoulid",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  }
 }

@@ -4,8 +4,8 @@ var fs = require('fs');
 var dirproc ={}; // main process for dir operations
 /*Create new directory or file*/ 
 
-count = function(array,callback){ // counts length of an array
-    let wordcount = 0; 
+count = function(array,callback){ // counts length of an array file:['filename','json']
+    let wordcount = 0;            // folder: ['namefolder']
     if (array instanceof Array){
         array.forEach(w => {
                 wordcount=wordcount+1;
@@ -20,8 +20,8 @@ count = function(array,callback){ // counts length of an array
 // if dir content = false, if file content=json data
 dirproc.create = (currdir,newObject,content,callback)=>{// create file or directory if not exists
                         if(typeof(newObject)==='string'){
-                            words = newObject.trim().split('.');
-
+                            words = newObject.trim().split('.');//see (A)CFuncSync at rMethod
+                            // split to check if file or folder, if file=>file.json
                             count(words,(err,count)=>{
 
                                 if(err){
@@ -30,18 +30,19 @@ dirproc.create = (currdir,newObject,content,callback)=>{// create file or direct
                                 else{
                                     let Objname=words[0];
                                     if(count===1){ //create file or dir;
-                                        /*callback*/callback('Is directory');
+                                        //callback('Is directory');//if-else block under callback is executed 
                                         if(!fs.existsSync(Objname)){
                                             fs.mkdirSync(currdir+'/'+Objname);
+                                            callback('Folder Creation Completed!')
                                         }
                                         else{
                                             callback('Folder already exists')
                                         }
                                     }
                                     else if (count===2){//need some content for the file
-                                        callback('Is file');
+                                        //callback('Is file');
                                         let ext = words[1];
-                                        let file = Objname+'.'+ext;
+                                        let file = Objname+'.'+ext;// filename.json
 
                                         fs.readdir(currdir,(err,files)=>{// check if file already exists
                                             if(!err){
@@ -55,9 +56,10 @@ dirproc.create = (currdir,newObject,content,callback)=>{// create file or direct
                                                         break;
                                                     } 
                                                 }
+                                                // check if Fexist
                                                 if(!Fexist){
-                                                    
-                                                    fs.appendFile(currdir+'/'+file,content,(err)=>{//appendFile
+                                                                                                    //asynchronously
+                                                    fs.appendFile(currdir+'/'+file,content,(err)=>{//append the given data to a file
                                                         if(err){
                                                             callback('Cannot create file: '+file);
                                                         }
@@ -110,8 +112,7 @@ dirproc.delete = (currdir,newObject,callback)=>{// create file or directory if n
                         
                     }
                     else{
-                        //fs.rmdirSync(currdir+'/'+Objname);
-                        //callback('Deletion of Folder completed');
+      
 /*************************************************************** */
                         var delpath = currdir+'/'+Objname;
                         fs.readdir(delpath,(err,files)=>{// first delete all files inside folder
@@ -145,16 +146,7 @@ dirproc.delete = (currdir,newObject,callback)=>{// create file or directory if n
 
                                 }
                         }});
-                        /*fs.rmdir(currdir+'/'+Objname,(err)=>{
-                            if(err){
-                                callback(err);
-                            }
-                            else{
-                                //var delpath = currdir+'/'+Objname;
-
-                                callback('Deletion of Folder completed')
-                            }
-                        });*/
+  
 
 /*************************************************************** */
                         }
@@ -246,5 +238,12 @@ dirproc.read= function (currdir,filepath,callback){
 
 
 /*Read File */
+
+/*Close file*/ 
+/*dirproc.close=function(currdir,newObject,callback){
+    fs.close(currdir)
+}
+*/
+/*Close file*/ 
 
 module.exports=dirproc;

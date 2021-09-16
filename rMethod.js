@@ -37,22 +37,22 @@ methods={}
 methods.checkmeth = function (reqmeth,callback){// query,request method
 
     var Metharray=['PUT','POST','GET','DELETE'];
-    console.log(reqmeth);
-    console.log(Metharray.indexOf(reqmeth));
+    
+    //console.log(Metharray.indexOf(reqmeth));
     if(Metharray.indexOf(reqmeth)>-1){
         /*call respective method*/ 
-        var rm = _methods[reqmeth.toLowerCase()];
+        var rm = _methods[reqmeth.toLowerCase()];//This is a function
         callback(false,rm);// testing rm
     }
     else{
-        callback(true);
+        callback('Non-authorized method');
     }
 
 }
 _methods={}
 
 
-
+//######################GET########################################################
 _methods.get=  function (qpath,resp,resfunc,info){// resp testing
   // in get read first auth to validate  
 
@@ -61,8 +61,8 @@ _methods.get=  function (qpath,resp,resfunc,info){// resp testing
             console.log(err);// succesful read or NOT!!
         }
         else{
-            var Authdata = JSON.parse(data);
-            // construct given auth
+            var Authdata = JSON.parse(data);// Parse existed auth
+            // construct given auth from client
             /*Given Auth creation */
             Auth["Payload"]["user"]=qpath["username"];
             Auth["Payload"]["pswd"]=qpath["pswd"];
@@ -74,8 +74,7 @@ _methods.get=  function (qpath,resp,resfunc,info){// resp testing
             /*Given Auth creation */
             var signature = H(Authdata);
             var validate =H(Auth);
-            //console.log('Auth entry:    ',signature);
-            //console.log('Given Auth :    ',validate);
+            
         }  
         
         
@@ -84,7 +83,7 @@ _methods.get=  function (qpath,resp,resfunc,info){// resp testing
         if(validate==signature){//Authenticate
             console.log('Authentication Completed');
             Readstream('./'+qpath.GroupUser+'/'+qpath.name+'/'+qpath.name+'.json');//change testing
-           
+            
             resfunc(info);
  
         }
@@ -100,7 +99,7 @@ _methods.get=  function (qpath,resp,resfunc,info){// resp testing
 }
 
 
-/**CHANGE TESTING */
+/**Function for reading file on terminal*/
 function Readstream(Filedir){// this func will be useful in put method
     // in put i retrieve the data , i change the data , then i send back the data to the file
       const readInterface = line.createInterface({
@@ -116,25 +115,26 @@ function Readstream(Filedir){// this func will be useful in put method
         }
       });
     }
-    /**CHANGE TESTING */
-
+    /**Function for reading file on terminal*/
+//######################GET########################################################
 // idea after reading file  red line by line
+//######################PUT########################################################
 _methods.put= function (qpath,resp,Timeout,resfunc,info){
 
     Dir.read('./'+qpath['GroupUser']+'/'+qpath['name'],'Auth.json',(err,data)=>{
         if(err){
             console.log(err);// succesful read or NOT!!
             resp.writeHead(500);
-            resp.end();
+            resp.end('Could not read Authentication file');
         }
         else{
             
-            let Authdata = JSON.parse(data);
+            let Authdata = JSON.parse(data);//given data from user
 
             //create cli read stream to get old pswd user input
             rl.question('Give first old password:',(pswd)=>{
                 old = pswd;// password from cli-input
-                console.log(old,Authdata["Payload"]["pswd"]);
+                console.log('Old pswd:',old,'New pswd:',Authdata["Payload"]["pswd"]);
                 if(old===Authdata["Payload"]["pswd"]){
                     Authdata["Payload"]["user"]=qpath["username"];
                     Authdata["Payload"]["pswd"]=qpath["pswd"];
@@ -142,23 +142,18 @@ _methods.put= function (qpath,resp,Timeout,resfunc,info){
 
                     var pretty = JSON.stringify(qpath,null,4); //changes to write
                     var Authpretty = JSON.stringify(Authdata,null,4); //changes to write
-                    //Writestream('./'+qpath.GroupUser+'/'+qpath.name+'/'+qpath.name+'.json',pretty);
-                    //Writestream('./'+qpath.GroupUser+'/'+qpath.name+'/'+'Auth.json',Authpretty);
+                    
                     Timeout1(Writestream('./'+qpath.GroupUser+'/'+qpath.name+'/'+qpath.name+'.json',pretty),Writestream('./'+qpath.GroupUser+'/'+qpath.name+'/'+'Auth.json',Authpretty),resfunc(info));
-                    //update json files then send response
+                    //update json files(first filename then auth) then send response
                 }
                 else{
                     resp.writeHead(500);
-                    resp.end('Invalid password');
+                    resp.end('Invalid password.Failed to modify changes');
                     
                 }
 
             });
-            /*rl.on('close',()=>{
-                console.log('Updated');
-            })*/
-
-
+           
         }  
 
     });
@@ -176,22 +171,22 @@ function Writestream(Filedir,query){// this func will be useful in put method
   
     }
 
+//######################PUT########################################################
 
-
-
+//###############POST########################################################################
 _methods.post=   function (qpath){// namefile,content is the query
     /*first use testfolder as main directory*/ 
     
     var curr = './';
-    var f =  qpath['GroupUser'];
+    var f =  qpath['GroupUser']; // groupuser
     var c =  '0';
    
-    var nxt_curr = './'+ qpath['GroupUser'];
+    var nxt_curr = './'+ qpath['GroupUser']; // ./groupuser/pathname
     var nxt_f = qpath['name'];
     var nxt_c =  '0';
 
 
-    var nxt_nxt_curr = './'+ qpath['GroupUser']+'/'+qpath['name'];
+    var nxt_nxt_curr = './'+ qpath['GroupUser']+'/'+qpath['name'];// ./groupuser/pathname
     var nxt_nxt_f = qpath['name']+'.json';
     var nxt_nxt_c =  JSON.stringify(qpath,null,4);
     
@@ -212,7 +207,7 @@ _methods.post=   function (qpath){// namefile,content is the query
 
 
 }
-
+//###############POST########################################################################
 async function Timeout(func1,func2,func3){// timeout for creation
     await func1;
     await func2;
@@ -230,17 +225,16 @@ async function Timeout1(func1,func2,func3){// time out for deletion
 function H(json){
     var buff1 = Buffer.from(JSON.stringify(json.Header)).toString('base64');
     var buff2 = Buffer.from(JSON.stringify(json.Payload)).toString('base64');
-    //console.log('buff1: ',buff1);
-    //console.log('buff2: ',buff2);
+    
     var fbuff = buff1+'.'+buff2;
-    //console.log('fbuff2: ',fbuff);
+    
     var salt = JSON.stringify(json.Salt);
     var p=h.createHash('sha256').update(fbuff+salt).digest('base64');
     return p;
 }
 /*hash function*/
 /*synch creation func*/
-var CFuncsync = (curr,f,c) =>{
+var CFuncsync = (curr,f,c) =>{ // mainly for folder creation
     if(!fs.existsSync(curr+'/'+f)){
         Dir.create(curr,f,c,(msg)=>{
 
@@ -284,59 +278,70 @@ var ACFuncsync = (curr,f,c,token) =>{// creation of files
 _methods.delete=  function (qpath,resp){// namefile,content is the query
   
 
-    nxt_curr = './'+qpath['GroupUser'];
-    nxt_f = qpath['name'];
+    let nxt_curr = './'+qpath['GroupUser']//+'/'+qpath['name'];
+    let nxt_f = qpath['name'];
+    let namefile = qpath['name']+'.json';
+    let Authfile = 'Auth.json';
+    let signature = 1;
+    let validate = 2;// So promise can't proceed until signature==validate
 
+// create promise(readfile and check authorization).then(send response after file is read and 
+//closed)
+    
+    new Promise((resolve,reject)=>{
+        
 
+        Dir.read('./'+qpath['GroupUser']+'/'+qpath['name'],'Auth.json',(err,data)=>{
 
-
-
-    Dir.read('./'+qpath['GroupUser']+'/'+qpath['name'],'Auth.json',(err,data)=>{
-        if(err){
-            console.log(err);// succesful read or NOT!!
-        }
-        else{
-            var Authdata = JSON.parse(data);
-            // construct given auth
-            /*Given Auth creation */
-            Auth["Payload"]["user"]=qpath["username"];
-            Auth["Payload"]["pswd"]=qpath["pswd"];
-            Auth["Payload"]["GroupUser"]=qpath["GroupUser"];
-            if(qpath["GroupUser"]=="admin"){
-                Auth["Payload"]["admin"]=true;
+            if(err){
+                console.log(err);// succesful read or NOT!!
             }
-            Auth["Salt"]=Authdata["Salt"];// generate random salt between min,max
-            /*Given Auth creation */
-            var signature = H(Authdata);
-            var validate =H(Auth);
-            //console.log('Auth entry:    ',signature);
-            //console.log('Given Auth :    ',validate);
-        }  
-        
-        
+            else{
+                var Authdata = JSON.parse(data);
+                // construct given auth
+                ///*Given Auth creation 
+                Auth["Payload"]["user"]=qpath["username"];
+                Auth["Payload"]["pswd"]=qpath["pswd"];
+                Auth["Payload"]["GroupUser"]=qpath["GroupUser"];
+                if(qpath["GroupUser"]=="admin"){
+                    Auth["Payload"]["admin"]=true;
+                }
+                Auth["Salt"]=Authdata["Salt"];// generate random salt between min,max
+               // /*Given Auth creation 
+                 signature = H(Authdata);
+                 validate =H(Auth);
+                //console.log('Auth entry:    ',signature);
+                //console.log('Given Auth :    ',validate);
+            }  
+            if(validate==signature){
+                resolve(true)
+            }
+            else{
+                resolve(false)
+            }
 
 
-        if(validate==signature){//Authenticate
-            console.log('Authentication Completed');
+
+        })
+        
+        
+    }).then((data)=>{
+        if(data){
             Dir.delete(nxt_curr,nxt_f,(msg)=>{
 
-                    console.log(msg);
-                    resp.writeHead(200);
-                    resp.end('Deletion Complete');
-            
-                });
-          
+                console.log(data);
+                resp.writeHead(200);
+                resp.end('Deletion Complete');})
+
         }
         else{
-            console.log('Authentication Failed!');
-            resp.writeHead(500);
-            resp.end('Authentication Failed!');
-
-            //return false; // auth failed
+            resp.writeHead(404);
+            resp.end('Authorization failed.could not delete file')
         }
-    });// function to be coded in dirs
-    
-   
+            
+            }).catch((err)=>{console.log(err);})
+
+ 
 
 }
 

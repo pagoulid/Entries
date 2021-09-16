@@ -23,8 +23,8 @@ var srv=require('http').createServer((req,res)=>{
     if(err){
       console.log(err);
       res.writeHead(500);
-      res.end();
-    }
+      res.end(err); 
+    }// check first for right attributes and after for right path
     else{
       
       //console.log(["name","username","pswd","GroupUser"].indexOf(querypath));
@@ -32,7 +32,9 @@ var srv=require('http').createServer((req,res)=>{
         
         if(info['error']){
           info['response'].writeHead(406);
-          console.log('Something went wrong');
+          info['response'].end('Invalid Path');
+
+          
         }
         else{
           
@@ -40,68 +42,74 @@ var srv=require('http').createServer((req,res)=>{
             /*Check method of request then act respectively for query*/
             rmeth.checkmeth(req.method,(err,rm)=>{
               if(err){
-                console.log('Something went wrong in method');
+               
+                info['response'].writeHead(500);
+                info['response'].end(err);
               }
               else{
                 if(req.method=='POST'){// if post write entry and sent response
-                var check = checkpath(querypath); 
-                if(!check){
+                var check = checkpath(querypath); // check if directory path exists
+                if(!check.value){
                   DelPostTimeout(rm(querypath),resTimeout(info));
 
                 }
                 else{
-                  console.log('User already exist');
+                  
                   info['response'].writeHead(500);
-                  info['response'].end('User already exist');
-                  //resTimeout(info);
+                  info['response'].end('User already exists');
+                  
                 }
-                //DelPostTimeout(rm(querypath),resTimeout(info));
+                
                 }
                 else if(req.method=='GET'){// if get read entry ,read data line by line,sent res
                   var check = checkpath(querypath);
-                  if(check){
+                  if(check.value){
                     rm(querypath,res,resTimeout,info);//Check for auth
                     //If auth valid then read file and send info response with restimeout
                     //else dont read and send 500 status response
-                    //GetPutTimeout(rm(querypath),Readstream('./'+querypath.GroupUser+'/'+querypath.name+'/'+querypath.name+'.json'),resTimeout(info));
+                    
                   }
                   else{
-                    console.log('Entry does not exist');
+                  
+                    
                     info['response'].writeHead(404);
-                    info['response'].end('Entry does not exist');
+                    
+                    info['response'].end(check.msg);//Either group either entry don't exist
                     
 
                   }
-                  //GetPutTimeout(rm(querypath),Readstream('./'+querypath.GroupUser+'/'+querypath.name+'/'+querypath.name+'.json'),resTimeout(info));
+                  
                 }
                 else if(req.method=='PUT'){// if get read entry ,read data line by line,sent res
                   var check = checkpath(querypath);
-                  if(check){
+                  
+                  
+                  if(check.value){
+                    
                     var pretty = JSON.stringify(querypath,null,4); //changes to write
-                    //GetPutTimeout(rm(querypath),Writestream('./'+querypath.GroupUser+'/'+querypath.name+'/'+querypath.name+'.json',pretty),resTimeout(info));
+                    
                     rm(querypath,res,GetPutTimeout,resTimeout,info);//need timeout to write data files before response
                   }
                   else{
-                    console.log('Entry does not exist');
+                    console.log('else inner check');
                     info['response'].writeHead(404);
-                    info['response'].end('Entry does not exist');
-                    //resTimeout(info);
+                    info['response'].end(check.msg);
+                    
 
                   }
-                  //var pretty = JSON.stringify(querypath,null,4); //changes to write
-                  //GetPutTimeout(rm(querypath),Writestream('./'+querypath.GroupUser+'/'+querypath.name+'/'+querypath.name+'.json',pretty),resTimeout(info));
+                  
                 }
                 else if(req.method=='DELETE'){
                   var check = checkpath(querypath);
-                  if(check){
+                  if(check.value){
                     //DelPostTimeout(rm(querypath),resTimeout(info));
                     rm(querypath,res);
 
                   }
                   else{
-                    console.log('Entry does not exist');
+                    
                     info['response'].writeHead(404);
-                    info['response'].end('Entry does not exist');
+                    info['response'].end(check.msg);
                     //resTimeout(info);
 
                   }
@@ -126,20 +134,28 @@ var srv=require('http').createServer((req,res)=>{
 });
 
 
-// check if path exists
+// check if directory path exists
 checkpath = function(path){
+  
+  var Groupdest = './'+path['GroupUser'];
   var dest = './'+path['GroupUser']+'/'+path['name'];
-  if(fs.existsSync(dest)){
-      return true;
+  if(fs.existsSync(Groupdest)){
+    
+    if(fs.existsSync(dest)){
+      return {value:true,msg:'Entry already exists'};
+    }
+    else{
+      return {value:false,msg:'Entry does not exists'};
+    }
   }
   else{
-      return false;
+    return {value:false,msg:'Group does not even exist'};
   }
+  
 
 }
 // set timeout func for waiting to send response,send response after reading writing entry
 function resTimeout(ReadPathInfo){
-  console.log('Success!!!');
   json_msg = JSON.stringify(ReadPathInfo['msg']);
   
   ReadPathInfo['response'].writeHead(200,{'Content-Type':'application/json'});
@@ -210,7 +226,7 @@ function ReadPath(path,response,callback){
      
   }
    
-  console.log('Invalid Path');   
+   
   info['error']=true;     
   info['response']=response;     
   callback(info);
