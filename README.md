@@ -1,7 +1,10 @@
 # Entries
-Creating/Updating/Deleting Entries 
-Using app Postman
-Programming Language : Nodejs
+      Creating/Updating/Deleting Entries 
+      Using app Postman
+      Programming Language : Nodejs
+
+
+
 Type node hw1.js on console to execute program
 Type localhost:3001/hello(or <morning> or <sunny>)?name=<name>&username=<username>&pswd=<password>&GroupUser=<Group>
 ( e.g.localhost:3001/morning?name=Mhtsos&username=hnoudou&pswd=123456&GroupUser=Tough_guys
